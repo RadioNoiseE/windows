@@ -1,5 +1,10 @@
 CC     ?= cc
-TARGET := windows
+
+PREFIX    ?= /usr/local
+MANPREFIX ?= $(PREFIX)/share/man
+
+TARGET  := windows
+MANPAGE := windows.1
 
 WAYLAND_SCANNER   := $(shell pkg-config --variable=wayland_scanner wayland-scanner)
 WAYLAND_PROTOCOLS := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
@@ -91,9 +96,25 @@ $(TARGET): $(OBJS)
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
+install: $(TARGET)
+	@echo "Installing executable to $(DESTDIR)$(PREFIX)/bin"
+	@mkdir -p $(DESTDIR)$(PREFIX)/bin
+	@install -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+#
+	@echo "Installing manual page to $(DESTDIR)$(MANPREFIX)/man1"
+	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	@install -m 644 $(MANPAGE) $(DESTDIR)$(MANPREFIX)/man1/$(MANPAGE)
+
+uninstall:
+	@echo "Removing executable from $(DESTDIR)$(PREFIX)/bin"
+	@rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+#
+	@echo "Removing manual page from $(DESTDIR)$(MANPREFIX)/man1"
+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(MANPAGE)
+
 -include $(DEPS)
 
-.PHONY: clean
+.PHONY: clean install uninstall
 clean:
 	rm -f $(OBJS) $(DEPS) $(TARGET) $(WAYLAND_HEADER) $(WAYLAND_INTERFACE)
 
